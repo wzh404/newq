@@ -20,9 +20,16 @@ public class HessianRpcProxy<T> implements InvocationHandler, Serializable{
 	private static AtomicLong atmoicLong = new AtomicLong();
 	
 	private Class<?> _type;
+	private String _rpcType;
 
-	public HessianRpcProxy( Class<?> type){
+	public HessianRpcProxy(Class<?> type, String rpcType){
 		this._type = type;
+		if (rpcType == null){
+			this._rpcType = "future";
+		}
+		else{
+			this._rpcType = rpcType;
+		}
 	}
 	
 	@Override
@@ -33,9 +40,12 @@ public class HessianRpcProxy<T> implements InvocationHandler, Serializable{
 			return "Proxy [" + this + "]";
 		}
 		long lsn = HessianRpcProxy.atmoicLong.incrementAndGet();
-		logger.info(Thread.currentThread().getName() + " invoke - put lsn is " + lsn);
-		HessianCoder.put(lsn, RpcService.getThreadLocalFuture());
-    	
+
+		if ("future".equalsIgnoreCase(_rpcType)) {
+			logger.info(Thread.currentThread().getName() + " invoke - put lsn is " + lsn);
+			HessianCoder.put(lsn, RpcService.getThreadLocalFuture());
+		}
+
 		byte[] data = HessianCoder.serialization(this._type, method.getName(), args, lsn);
 		ByteBuf buf = Unpooled.wrappedBuffer(data);
 		NettyClient.getInstance().getChannel().writeAndFlush(buf).sync();

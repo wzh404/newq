@@ -29,7 +29,7 @@ public class RpcService<U, T> {
         futureThreadLocal.set(future);
 
         if (cache.get(api) == null) {
-            cache.put(api, new HessianRpcProxy(api));
+            cache.put(api, new HessianRpcProxy(api, "future"));
         }
         HessianRpcProxy handler = cache.get(api);
 

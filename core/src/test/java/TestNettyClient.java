@@ -2,7 +2,7 @@ import com.xeehoo.rpc.core.netty.client.NettyClient;
 
 public class TestNettyClient {
 	public static void main(String[] args){
-		NettyClient.getInstance().run();
+//		NettyClient.getInstance().run();
 //		call();
 	}
 	

@@ -11,6 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import com.caucho.hessian.io.Hessian2Input;
 import com.caucho.hessian.io.Hessian2Output;
 import com.xeehoo.rpc.core.rpc.ApiBean;
+import com.xeehoo.rpc.core.rpc.ApiReply;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -111,23 +112,24 @@ public class HessianCoder {
 		return data;
 	}
 	
-	public static Object getReply(byte[] data, Class<?> returnType){
+	public static ApiReply getReply(byte[] data, Class<?> returnType){
 		ByteArrayInputStream bin = new ByteArrayInputStream(data);
 		Hessian2Input in = new Hessian2Input(bin);
 		
-		Object obj = null;
 		try {
 			int code = in.read();
 			int major = in.read();
 			int minor = in.read();
-		
-			obj = in.readReply(returnType);
+
+            Object obj = in.readReply(returnType);
 			long lsn = in.readLong();
 			in.completeReply();
-			
-			logger.info(Thread.currentThread().getName() + " get lsn - " + lsn);
-			emit(lsn, obj);
 
+			ApiReply reply = new ApiReply();
+			reply.setLsn(lsn);
+			reply.setObj(obj);
+
+			return reply;
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (Throwable e) {
@@ -139,7 +141,7 @@ public class HessianCoder {
 				e.printStackTrace();
 			}			
 		}
-		return obj;
+		return null;
 	}
 	
 	public static void emit(long lsn, Object obj){

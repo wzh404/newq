@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
+import akka.actor.ActorSystem;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
@@ -29,14 +30,14 @@ public class NettyClient {
         return SingletonHolder.INSTANCE;
     }
     
-	public void run(){
+	public void run(ActorSystem system){
 		this.group = new NioEventLoopGroup(); 
         Bootstrap b = new Bootstrap(); 
         b.group(group).channel(NioSocketChannel.class); 
         b.handler(new ChannelInitializer<NioSocketChannel>() {
 			@Override
 			protected void initChannel(NioSocketChannel ch) throws Exception {
-				ch.pipeline().addLast(new NettyChannelInHandler());				
+				ch.pipeline().addLast(new NettyChannelInHandler(system));
 			}        	
         });
         b.option(ChannelOption.SO_KEEPALIVE, true);
