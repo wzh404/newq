@@ -50,7 +50,7 @@ public class CompletableFutureContoller {
 	}
 
 	@RequestMapping(value = "/akka", method = RequestMethod.GET)
-	public DeferredResult<ModelAndView> akka(HttpServletRequest req, HttpServletResponse resp){
+	public DeferredResult<ModelAndView> akka(HttpServletRequest req){
 		final ActorSystem system = (ActorSystem) req.getServletContext().getAttribute("ActorSystem");
 		RpcService<UserService, User> rpc = new RpcService(UserService.class);
 		return rpc.applyAsync(system, r -> func2(r), r -> func(r));
