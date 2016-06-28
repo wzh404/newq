@@ -4,6 +4,7 @@ import java.lang.reflect.Method;
 
 public class ApiBean {
 	private long lsn;
+	private int type;
 	private String api;
 	private Method method;
 	private Object[] paras;
@@ -38,6 +39,12 @@ public class ApiBean {
 	public void setLsn(long lsn) {
 		this.lsn = lsn;
 	}
-	
-	
+
+	public int getType() {
+		return type;
+	}
+
+	public void setType(int type) {
+		this.type = type;
+	}
 }

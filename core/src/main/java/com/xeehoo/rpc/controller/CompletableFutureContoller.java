@@ -7,6 +7,7 @@ import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
 import akka.actor.Props;
 import com.xeehoo.rpc.core.akka.AkkaServiceActor;
+import com.xeehoo.rpc.core.rpc.HessianAkkaProxy;
 import com.xeehoo.rpc.core.rpc.HessianRpcProxy;
 import com.xeehoo.rpc.core.rpc.RpcService;
 import com.xeehoo.rpc.core.rpc.Servicer;
@@ -43,40 +44,16 @@ public class CompletableFutureContoller {
 
 	@RequestMapping(value = "/netty", method = RequestMethod.GET)
 	public CompletableFuture<ModelAndView> netty(){
-		logger.info("----------------------");
-//		RpcService<User, ModelAndView> rpc = new RpcService<User, ModelAndView>()
-//        		.api(UserService.class)
-//        		.thenApply(r -> func(r))
-//        		.exceptionally((t) -> ex(t));
-//
-//        UserService userService = (UserService)rpc.getService();
-//        userService.getUser(3);
-
 		System.out.println(Thread.currentThread().getName() + " completed. ");
 		RpcService<UserService, User> rpc = new RpcService(UserService.class);
-		return rpc.applyAsync(r -> func2(r))
-		          .thenApply(r -> func(r));
-        
-
-//		return rpc.getResult();
+		return rpc.applyAsync(r -> func2(r), r -> func(r));
 	}
 
 	@RequestMapping(value = "/akka", method = RequestMethod.GET)
-	public DeferredResult<String> akka(HttpServletRequest req, HttpServletResponse resp){
-//		final AsyncContext asyncContext = req.startAsync();
-//		HttpServletResponse resp = (HttpServletResponse) asyncContext.getResponse();
-		final ActorSystem system = (ActorSystem) req.getServletContext()
-				.getAttribute("ActorSystem");
-
-		DeferredResult<String> deferredResult = new DeferredResult<String>();
-		ActorRef actorRef = system.actorOf(Props.create(AkkaServiceActor.class, UserService.class, deferredResult, resp), "serviceActor");
-		logger.info("path is " + actorRef.path().toString());
-
-		HessianRpcProxy handler = new HessianRpcProxy(UserService.class, "akka");
-		Object proxy = Proxy.newProxyInstance(UserService.class.getClassLoader(), new Class[]{UserService.class}, handler);
-		((UserService) proxy).getUser(3);
-
-		return deferredResult;
+	public DeferredResult<ModelAndView> akka(HttpServletRequest req, HttpServletResponse resp){
+		final ActorSystem system = (ActorSystem) req.getServletContext().getAttribute("ActorSystem");
+		RpcService<UserService, User> rpc = new RpcService(UserService.class);
+		return rpc.applyAsync(system, r -> func2(r), r -> func(r));
 	}
 	
 	private  ModelAndView func(User o) {

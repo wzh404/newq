@@ -7,6 +7,7 @@ import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 import com.caucho.hessian.io.Hessian2Input;
 import com.caucho.hessian.io.Hessian2Output;
@@ -18,14 +19,16 @@ import org.apache.logging.log4j.Logger;
 public class HessianCoder {
 	private static final Logger logger =  LogManager.getLogger();
 	private static Map<Long, CompletableFuture<Object>> map = new ConcurrentHashMap<Long, CompletableFuture<Object>>();
-	
-	public static byte[] serialization(Class<?> cls, String methodName, Object[] paras, long lsn){
+	private static AtomicLong atmoicLong = new AtomicLong();
+
+	public static byte[] serialization(Class<?> cls, String methodName, Object[] paras, long lsn, int t){
 		ByteArrayOutputStream bos = new ByteArrayOutputStream();
 		Hessian2Output out = new Hessian2Output(bos);	
 
 		try {
 			out.startMessage();
 			out.writeLong(lsn);
+			out.writeInt(t);
 			out.writeString(cls.getName());
 			out.writeString(methodName);
 			out.writeInt(paras.length);
@@ -55,6 +58,7 @@ public class HessianCoder {
 		try {
 			in.startMessage();
 			long lsn = in.readLong();
+			int type = in.readInt();
 			
 			String className = in.readString();
 			String methodName = in.readString();
@@ -72,6 +76,7 @@ public class HessianCoder {
 			api.setMethod(method);
 			api.setParas(paras);
 			api.setLsn(lsn);
+			api.setType(type);
 			
 			return api;
 
@@ -89,7 +94,7 @@ public class HessianCoder {
 		return null;
 	}
 	
-	public static byte[] reply(Object object, long lsn){
+	public static byte[] reply(Object object, long lsn, int type){
 		ByteArrayOutputStream bos = new ByteArrayOutputStream();
 		Hessian2Output out = new Hessian2Output(bos);	
 
@@ -97,6 +102,7 @@ public class HessianCoder {
 			out.startReply();
 			out.writeObject(object);
 			out.writeLong(lsn);
+			out.writeInt(type);
 			out.completeReply();
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -123,11 +129,13 @@ public class HessianCoder {
 
             Object obj = in.readReply(returnType);
 			long lsn = in.readLong();
+			int type = in.readInt();
 			in.completeReply();
 
 			ApiReply reply = new ApiReply();
 			reply.setLsn(lsn);
 			reply.setObj(obj);
+			reply.setType(type);
 
 			return reply;
 		} catch (IOException e) {
@@ -154,5 +162,9 @@ public class HessianCoder {
 	
 	public static void put(long lsn, CompletableFuture<Object> f){
 		HessianCoder.map.put(lsn, f);
+	}
+
+	public static long lsn(){
+		return atmoicLong.incrementAndGet();
 	}
 }

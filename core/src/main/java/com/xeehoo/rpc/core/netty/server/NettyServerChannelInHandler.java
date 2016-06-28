@@ -47,7 +47,7 @@ public class NettyServerChannelInHandler extends ChannelInboundHandlerAdapter {
 			return;
 		}
 		
-		byte[] datas = HessianCoder.reply(u, api.getLsn());
+		byte[] datas = HessianCoder.reply(u, api.getLsn(), api.getType());
 		try {
 			ctx.channel().writeAndFlush(Unpooled.wrappedBuffer(datas)).sync();
 		} catch (InterruptedException e) {

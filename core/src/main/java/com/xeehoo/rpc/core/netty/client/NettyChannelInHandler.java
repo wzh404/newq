@@ -8,8 +8,11 @@ import com.xeehoo.rpc.model.User;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class NettyChannelInHandler extends ChannelInboundHandlerAdapter{
+    private final Logger logger =  LogManager.getLogger();
     private final ActorSystem system;
 
     public NettyChannelInHandler(ActorSystem system){
@@ -25,10 +28,15 @@ public class NettyChannelInHandler extends ChannelInboundHandlerAdapter{
 		
 		ApiReply reply = HessianCoder.getReply(bytes, User.class);
 		if (reply != null){
-            if (system != null){
-                System.out.println("__________________TELL___________");
-                ActorRef actorRef = system.actorFor("akka://newq-akka/user/serviceActor");
-                actorRef.tell(reply, actorRef.noSender());
+            if (reply.getType() == 2){
+                if (system != null) {
+                    logger.info("__________________TELL___________" + reply.getLsn());
+                    ActorRef actorRef = system.actorFor("akka://newq-akka/user/serviceActor$" + reply.getLsn());
+                    actorRef.tell(reply, actorRef.noSender());
+                }
+                else{
+                    logger.info("__________________TELL FAILED___________" + reply.getLsn());
+                }
             }
             else{
                 HessianCoder.emit(reply.getLsn(), reply.getObj());

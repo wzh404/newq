@@ -10,46 +10,37 @@ import org.apache.logging.log4j.Logger;
 import java.io.Serializable;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.CompletableFuture;
 
 
-public class HessianRpcProxy<T> implements InvocationHandler, Serializable{
-	private final Logger logger =  LogManager.getLogger();
+public class HessianRpcProxy<T> implements InvocationHandler, Serializable {
+    private final Logger logger = LogManager.getLogger();
+    private static final long serialVersionUID = -5392660471766899934L;
 
-	private static final long serialVersionUID = -5392660471766899934L;
-	private static AtomicLong atmoicLong = new AtomicLong();
-	
-	private Class<?> _type;
-	private String _rpcType;
+    private Class<?> _type;
+    private CompletableFuture<T> _future;
 
-	public HessianRpcProxy(Class<?> type, String rpcType){
-		this._type = type;
-		if (rpcType == null){
-			this._rpcType = "future";
-		}
-		else{
-			this._rpcType = rpcType;
-		}
-	}
-	
-	@Override
-	public Object invoke(Object proxy, Method method, Object[] args)
-			throws Throwable {
-		String methodName = method.getName();
-		if ("toString".equals(methodName)){
-			return "Proxy [" + this + "]";
-		}
-		long lsn = HessianRpcProxy.atmoicLong.incrementAndGet();
+    public HessianRpcProxy(Class<?> type, CompletableFuture<T> future) {
+        this._type = type;
+        this._future = future;
+    }
 
-		if ("future".equalsIgnoreCase(_rpcType)) {
-			logger.info(Thread.currentThread().getName() + " invoke - put lsn is " + lsn);
-			HessianCoder.put(lsn, RpcService.getThreadLocalFuture());
-		}
+    @Override
+    public Object invoke(Object proxy, Method method, Object[] args)
+            throws Throwable {
+        String methodName = method.getName();
+        if ("toString".equals(methodName)) {
+            return "Proxy [" + this + "]";
+        }
+        long lsn = HessianCoder.lsn();
 
-		byte[] data = HessianCoder.serialization(this._type, method.getName(), args, lsn);
-		ByteBuf buf = Unpooled.wrappedBuffer(data);
-		NettyClient.getInstance().getChannel().writeAndFlush(buf).sync();
-    	
-    	return null;
-	}
+        logger.info(Thread.currentThread().getName() + " invoke - put lsn is " + lsn);
+        HessianCoder.put(lsn, (CompletableFuture) _future);
+
+        byte[] data = HessianCoder.serialization(this._type, method.getName(), args, lsn, 1);
+        ByteBuf buf = Unpooled.wrappedBuffer(data);
+        NettyClient.getInstance().getChannel().writeAndFlush(buf).sync();
+
+        return null;
+    }
 }
