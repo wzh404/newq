@@ -23,12 +23,10 @@ public class HessianAkkaProxy<T> implements InvocationHandler, Serializable{
 	private static final long serialVersionUID = -5392660471766899934L;
 
 	private Class<?> _type;
-//	private DeferredResult<String> _deferredResult;
 	private long _lsn;
 
 	public HessianAkkaProxy(Class<?> type, long lsn){
 		this._type = type;
-//		this._deferredResult = deferredResult;
 		this._lsn = lsn;
 	}
 	

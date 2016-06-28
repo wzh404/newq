@@ -16,6 +16,7 @@ import com.xeehoo.rpc.service.UserService;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -30,8 +31,8 @@ import javax.servlet.http.HttpServletResponse;
 public class CompletableFutureContoller {
 	private final Logger logger =  LogManager.getLogger();
 
-//	@Autowired
-//	private SomeService someService;
+	@Autowired
+	private RpcService<UserService, User> userRpcService;
 //
 //	@RequestMapping(value = "/async", method = RequestMethod.GET)
 //	public CompletableFuture<ModelAndView> indexAsync() {
@@ -45,15 +46,13 @@ public class CompletableFutureContoller {
 	@RequestMapping(value = "/netty", method = RequestMethod.GET)
 	public CompletableFuture<ModelAndView> netty(){
 		System.out.println(Thread.currentThread().getName() + " completed. ");
-		RpcService<UserService, User> rpc = new RpcService(UserService.class);
-		return rpc.applyAsync(r -> func2(r), r -> func(r));
+		return userRpcService.applyAsync(r -> func2(r), r -> func(r));
 	}
 
 	@RequestMapping(value = "/akka", method = RequestMethod.GET)
 	public DeferredResult<ModelAndView> akka(HttpServletRequest req){
 		final ActorSystem system = (ActorSystem) req.getServletContext().getAttribute("ActorSystem");
-		RpcService<UserService, User> rpc = new RpcService(UserService.class);
-		return rpc.applyAsync(system, r -> func2(r), r -> func(r));
+		return userRpcService.applyAsync(system, r -> func2(r), r -> func(r));
 	}
 	
 	private  ModelAndView func(User o) {
@@ -64,10 +63,5 @@ public class CompletableFutureContoller {
 	private void func2(UserService userService){
 		logger.info(Thread.currentThread().getName() + "___________" + userService);
 		userService.getUser(3);
-	}
-	
-	private  User ex(Throwable t){
-		logger.info(Thread.currentThread().getName() + " future______________" + t.getMessage());
-		return null;
 	}
 }

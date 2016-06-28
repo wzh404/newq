@@ -7,6 +7,7 @@ public class ApiReply {
     private long lsn;
     private int type;
     private Object obj;
+    private String className;
 
     public long getLsn() {
         return lsn;
@@ -30,5 +31,13 @@ public class ApiReply {
 
     public void setType(int type) {
         this.type = type;
+    }
+
+    public String getClassName() {
+        return className;
+    }
+
+    public void setClassName(String className) {
+        this.className = className;
     }
 }

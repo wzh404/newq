@@ -96,10 +96,11 @@ public class HessianCoder {
 	
 	public static byte[] reply(Object object, long lsn, int type){
 		ByteArrayOutputStream bos = new ByteArrayOutputStream();
-		Hessian2Output out = new Hessian2Output(bos);	
+		Hessian2Output out = new Hessian2Output(bos);
 
 		try {
 			out.startReply();
+			out.writeObject(object.getClass().getName());
 			out.writeObject(object);
 			out.writeLong(lsn);
 			out.writeInt(type);
@@ -118,7 +119,7 @@ public class HessianCoder {
 		return data;
 	}
 	
-	public static ApiReply getReply(byte[] data, Class<?> returnType){
+	public static ApiReply getReply(byte[] data){
 		ByteArrayInputStream bin = new ByteArrayInputStream(data);
 		Hessian2Input in = new Hessian2Input(bin);
 		
@@ -127,7 +128,8 @@ public class HessianCoder {
 			int major = in.read();
 			int minor = in.read();
 
-            Object obj = in.readReply(returnType);
+			String className = (String)in.readReply(String.class);
+			Object obj = in.readObject(Class.forName(className));
 			long lsn = in.readLong();
 			int type = in.readInt();
 			in.completeReply();
@@ -136,6 +138,7 @@ public class HessianCoder {
 			reply.setLsn(lsn);
 			reply.setObj(obj);
 			reply.setType(type);
+			reply.setClassName(className);
 
 			return reply;
 		} catch (IOException e) {

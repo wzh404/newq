@@ -26,7 +26,7 @@ public class NettyChannelInHandler extends ChannelInboundHandlerAdapter{
 		buf.readBytes(bytes);		
 		buf.release();
 		
-		ApiReply reply = HessianCoder.getReply(bytes, User.class);
+		ApiReply reply = HessianCoder.getReply(bytes);
 		if (reply != null){
             if (reply.getType() == 2){
                 if (system != null) {
