@@ -31,8 +31,8 @@ public class NettyChannelInHandler extends ChannelInboundHandlerAdapter{
             if (reply.getType() == 2){
                 if (system != null) {
                     logger.info("__________________TELL___________" + reply.getLsn());
-                    ActorRef actorRef = system.actorFor("akka://newq-akka/user/serviceActor$" + reply.getLsn());
-                    actorRef.tell(reply, actorRef.noSender());
+                    system.actorSelection("akka://newq-akka/user/serviceActor$" + reply.getLsn())
+                          .tell(reply, ActorRef.noSender());
                 }
                 else{
                     logger.info("__________________TELL FAILED___________" + reply.getLsn());

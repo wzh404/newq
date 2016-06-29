@@ -20,16 +20,32 @@ import java.util.function.Function;
 public class RpcService<U, T> {
     private final Logger logger =  LogManager.getLogger();
 
-	private Class<U> _api;
+    private Class<U> _api;
 
-    public RpcService(Class<U> api){
-        this._api = api;
-	}
+    public Class<U> get_api() {
+        return _api;
+    }
 
+    public void set_api(Class<U> _api) {
+        this._api = _api;
+    }
+
+
+//    public RpcService(Class<U> api){
+//        this._api = api;
+//	}
+
+    /**
+     * CompletableFuture
+     *
+     * @param servicer
+     * @param fn
+     * @return
+     */
     public CompletableFuture<ModelAndView> applyAsync(Servicer<U> servicer, Function<T, ModelAndView> fn){
 //        long stime = System.currentTimeMillis();
 
-        CompletableFuture<T> future = new CompletableFuture<>();;
+        CompletableFuture<T> future = new CompletableFuture<>();
         HessianRpcProxy handler = new HessianRpcProxy(_api, future);
         U u = (U)create(handler);
 //        logger.info("ref is ____________" + (System.currentTimeMillis() - stime) + "ms");
@@ -39,6 +55,14 @@ public class RpcService<U, T> {
         return future.thenApply(fn);
     }
 
+    /**
+     * Akka
+     *
+     * @param system
+     * @param servicer
+     * @param fn
+     * @return
+     */
     public DeferredResult<ModelAndView> applyAsync(ActorSystem system, Servicer<U> servicer, Function<T, ModelAndView> fn){
         long lsn = HessianCoder.lsn();
 //        long startTime = System.nanoTime();
